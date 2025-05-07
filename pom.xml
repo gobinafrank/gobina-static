@@ -17,19 +17,19 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <build.version>1.0</build.version>
-        <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
+        <javax.servlet.version>4.0.1</javax.servlet.version>
         <junit.version>5.10.1</junit.version>
     </properties>
 
     <dependencies>
-        <!-- Jakarta Servlet API (Jakarta EE 10) -->
+        <!-- Javax Servlet API (Java EE 8) -->
         <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
-            <version>${jakarta.servlet.version}</version>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${javax.servlet.version}</version>
             <scope>provided</scope>
         </dependency>
-        
+
         <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -98,7 +98,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <!-- Removed distributionManagement section for Nexus -->
 
 </project>
