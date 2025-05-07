@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DobreTech - DevOps Pipeline Demo</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <span class="logo-text">DobreTech</span>
+                <span class="tagline">DevOps Solutions</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#pipeline">Pipeline</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Enterprise DevOps Pipeline Solution</h1>
+            <p>Streamline your development workflow with our comprehensive CI/CD pipeline</p>
+            <div class="cta-buttons">
+                <a href="hello" class="btn btn-primary">View Demo</a>
+                <a href="#pipeline" class="btn btn-secondary">Learn More</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="about">
+        <div class="container">
+            <div class="section-header">
+                <h2>About This Demo</h2>
+                <p>A showcase of modern DevOps practices and tools integration</p>
+            </div>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>This demonstration showcases a complete DevOps pipeline implementation for enterprise applications. The pipeline is designed to automate the software delivery process from code commit to production deployment, ensuring quality and reliability at every step.</p>
+                    <p>Our implementation follows industry best practices and utilizes leading tools in the DevOps ecosystem to provide a scalable, repeatable, and efficient delivery process.</p>
+                </div>
+                <div class="version-info">
+                    <div class="version-badge">
+                        <span>Version</span>
+                        <strong>1.0</strong>
+                    </div>
+                    <div class="build-info">
+                        <p>Build Date: <span id="buildDate">May 7, 2024</span></p>
+                        <p>Last Updated: <span id="currentDate"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pipeline" class="pipeline">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our DevOps Pipeline</h2>
+                <p>End-to-end automation from source control to deployment</p>
+            </div>
+            <div class="pipeline-diagram">
+                <div class="pipeline-step">
+                    <div class="icon">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <h3>Source Control</h3>
+                    <p>GitHub repository for version control and collaboration</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="icon">
+                        <i class="fab fa-jenkins"></i>
+                    </div>
+                    <h3>CI/CD</h3>
+                    <p>Jenkins for continuous integration and delivery</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="icon">
+                        <i class="fas fa-bug"></i>
+                    </div>
+                    <h3>Code Quality</h3>
+                    <p>SonarQube for code quality and security analysis</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h3>Artifact Repository</h3>
+                    <p>Nexus for storing and managing build artifacts</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3>Deployment</h3>
+                    <p>Ansible for automated and consistent deployments</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Monitoring</h3>
+                    <p>Prometheus and Grafana for monitoring and visualization</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Key Features</h2>
+                <p>Benefits of our DevOps pipeline implementation</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Rapid Delivery</h3>
+                    <p>Automate build, test, and deployment processes to deliver features faster</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Quality Assurance</h3>
+                    <p>Enforce code quality standards and security best practices</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sync"></i>
+                    </div>
+                    <h3>Continuous Feedback</h3>
+                    <p>Get immediate feedback on code changes and build status</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Automation</h3>
+                    <p>Reduce manual intervention and human error with automation</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2>Contact Us</h2>
+                <p>Get in touch for more information about our DevOps solutions</p>
+            </div>
+            <div class="contact-form">
+                <form id="demoForm">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Company</label>
+                        <input type="text" id="company" name="company">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
+                <div id="formSuccess" class="form-success hidden">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>Thank You!</h3>
+                    <p>Your message has been received. We'll get back to you shortly.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <span class="logo-text">DobreTech</span>
+                    <p>Empowering DevOps Excellence</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#pipeline">Pipeline</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> info@dobretech.com</p>
+                    <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 DobreTech. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
