@@ -2,85 +2,103 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HOST = '16.171.239.65'
-        SSH_KEY_ID = 'docker-host-key' // Jenkins SSH key ID
-        DOCKER_IMAGE = 'dobretech/myapp'
-        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
+        DOCKER_HOST = '16.171.239.65'  // Docker host IP address
+        DOCKER_USER = 'ubuntu'         // Docker host username
+        DOCKER_PORT = '22'             // Docker host SSH port
+        DOCKER_IMAGE_NAME = 'myapp'    // Docker image name
     }
 
     stages {
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Clone Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/DobreTech-Repo/Lab1.git'
+                git 'https://github.com/DobreTech-Repo/Lab1.git'
             }
         }
 
         stage('Build WAR') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                script {
+                    // Run Maven to clean, compile, and package the WAR file
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Add Docker Host to Known Hosts') {
+            steps {
+                script {
+                    // Add Docker host to known hosts to prevent SSH verification errors
+                    sh '''
+                        ssh-keyscan -H ${DOCKER_HOST} >> ~/.ssh/known_hosts
+                    '''
+                }
             }
         }
 
         stage('Transfer Files to Docker Host') {
             steps {
-                sshagent (credentials: [env.SSH_KEY_ID]) {
-                    sh """
-                        scp Dockerfile target/*.war ubuntu@${DOCKER_HOST}:/home/ubuntu/
-                        ssh ubuntu@${DOCKER_HOST} '
-                            mkdir -p ~/tomcat-app &&
-                            mv *.war Dockerfile ~/tomcat-app/
-                        '
-                    """
+                sshagent(['ubuntu']) {
+                    // Transfer the WAR file and Dockerfile to the Docker host
+                    sh 'scp Dockerfile target/myapp.war ${DOCKER_USER}@${DOCKER_HOST}:/home/ubuntu/'
                 }
             }
         }
 
         stage('Build Docker Image on Docker Host') {
             steps {
-                sshagent (credentials: [env.SSH_KEY_ID]) {
-                    sh """
-                        ssh ubuntu@${DOCKER_HOST} '
-                            cd ~/tomcat-app &&
-                            docker build -t ${DOCKER_IMAGE} .
-                        '
-                    """
+                sshagent(['ubuntu']) {
+                    // SSH into Docker host and build the Docker image
+                    sh '''
+                        ssh ${DOCKER_USER}@${DOCKER_HOST} "
+                            docker build -t ${DOCKER_IMAGE_NAME} /home/ubuntu
+                        "
+                    '''
                 }
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                sshagent (credentials: [env.SSH_KEY_ID]) {
-                    sh """
-                        ssh ubuntu@${DOCKER_HOST} '
-                            echo "${DOCKER_CREDENTIALS_PSW}" | docker login -u "${DOCKER_CREDENTIALS_USR}" --password-stdin &&
-                            docker push ${DOCKER_IMAGE}
-                        '
-                    """
+                sshagent(['ubuntu']) {
+                    // Push the Docker image to Docker Hub (make sure to log in first)
+                    sh '''
+                        ssh ${DOCKER_USER}@${DOCKER_HOST} "
+                            docker login -u <dockerhub-username> -p <dockerhub-password>
+                            docker push ${DOCKER_IMAGE_NAME}
+                        "
+                    '''
                 }
             }
         }
 
         stage('Deploy Docker Container') {
             steps {
-                sshagent (credentials: [env.SSH_KEY_ID]) {
-                    sh """
-                        ssh ubuntu@${DOCKER_HOST} '
-                            docker rm -f tomcat-container || true &&
-                            docker run -d --name tomcat-container -p 8080:8080 ${DOCKER_IMAGE}
-                        '
-                    """
+                sshagent(['ubuntu']) {
+                    // SSH into Docker host and run the Docker container
+                    sh '''
+                        ssh ${DOCKER_USER}@${DOCKER_HOST} "
+                            docker run -d -p 8080:8080 ${DOCKER_IMAGE_NAME}
+                        "
+                    '''
                 }
             }
         }
     }
 
     post {
-        success {
-            echo '✅ Deployment successful! Visit: http://16.171.239.65:8080/your-app-path/'
-        }
-        failure {
+        always {
+            // Add a message to indicate that the pipeline has finished
             echo '❌ Deployment failed. Check console output for errors.'
+        }
+        success {
+            // Add a success message for when the pipeline runs successfully
+            echo '✅ Deployment successful!'
         }
     }
 }
