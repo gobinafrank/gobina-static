@@ -22,12 +22,6 @@ pipeline {
             }
         }
 
-        stage('Rename WAR') {
-            steps {
-                sh 'mv target/*.war target/${WAR_NAME}'
-            }
-        }
-
         stage('Prepare SSH Known Hosts') {
             steps {
                 sh '''
