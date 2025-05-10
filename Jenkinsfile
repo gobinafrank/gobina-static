@@ -47,11 +47,17 @@ pipeline {
             steps {
                 sshagent(['docker-ssh-key']) {
                     script {
-                        // Build Docker image on the Docker host
+                        // Diagnostic: Check Docker version and status
+                        sh '''
+                            ssh $SSH_USER@$DOCKER_HOST '
+                            docker --version
+                            docker info
+                        '
+                        // Build Docker image on the remote host
                         sh '''
                             ssh $SSH_USER@$DOCKER_HOST '
                             cd /home/ubuntu &&
-                            docker build -t $IMAGE_NAME .'
+                            docker build --no-cache -t $IMAGE_NAME .'
                         '''
                     }
                 }
