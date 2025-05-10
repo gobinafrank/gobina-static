@@ -2,10 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HOST = '16.171.239.65'
-        SSH_KEY_ID = 'docker-host-key'                // SSH private key for Docker host
-        DOCKER_IMAGE = 'dobretech/myapp'              // Your Docker Hub image
-        DOCKER_CREDENTIALS = credentials('dockerhub-creds') // Jenkins credential ID: dockerhub-creds
+        DOCKER_IMAGE = 'dobretech/myapp'
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds') // username/password
     }
 
     stages {
@@ -21,56 +19,44 @@ pipeline {
             }
         }
 
-        stage('Transfer to Docker Host') {
+        stage('Transfer Files') {
+            agent { label 'docker' }
             steps {
-                sshagent (credentials: [env.SSH_KEY_ID]) {
-                    sh """
-                        scp Dockerfile target/myapp.war ubuntu@${DOCKER_HOST}:/home/ubuntu/
-                        ssh ubuntu@${DOCKER_HOST} '
-                            mkdir -p ~/tomcat-app &&
-                            mv Dockerfile myapp.war ~/tomcat-app/
-                        '
-                    """
-                }
+                sh '''
+                    mkdir -p ~/tomcat-app
+                    cp Dockerfile target/myapp.war ~/tomcat-app/
+                '''
             }
         }
 
         stage('Build Docker Image') {
+            agent { label 'docker' }
             steps {
-                sshagent (credentials: [env.SSH_KEY_ID]) {
-                    sh """
-                        ssh ubuntu@${DOCKER_HOST} '
-                            cd ~/tomcat-app &&
-                            docker build -t ${DOCKER_IMAGE} .
-                        '
-                    """
+                dir('~/tomcat-app') {
+                    sh "docker build -t ${DOCKER_IMAGE} ."
                 }
             }
         }
 
         stage('Push to Docker Hub') {
+            agent { label 'docker' }
             steps {
-                sshagent (credentials: [env.SSH_KEY_ID]) {
-                    sh """
-                        ssh ubuntu@${DOCKER_HOST} '
-                            echo "${DOCKER_CREDENTIALS_PSW}" | docker login -u "${DOCKER_CREDENTIALS_USR}" --password-stdin &&
-                            docker push ${DOCKER_IMAGE}
-                        '
-                    """
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}
+                    '''
                 }
             }
         }
 
         stage('Deploy to Docker') {
+            agent { label 'docker' }
             steps {
-                sshagent (credentials: [env.SSH_KEY_ID]) {
-                    sh """
-                        ssh ubuntu@${DOCKER_HOST} '
-                            docker rm -f tomcat-container || true &&
-                            docker run -d --name tomcat-container -p 8080:8080 ${DOCKER_IMAGE}
-                        '
-                    """
-                }
+                sh '''
+                    docker rm -f tomcat-container || true
+                    docker run -d --name tomcat-container -p 8080:8080 ${DOCKER_IMAGE}
+                '''
             }
         }
     }
