@@ -3,10 +3,9 @@ pipeline {
 
     environment {
         DOCKER_HOST = '16.171.239.65'
-        SSH_KEY_ID = 'docker-host-key'               // SSH private key for Docker host
-        DOCKER_IMAGE = 'dobretech/myapp'             // Your Docker Hub image
-        DOCKER_HUB_USERNAME = credentials('DOCKER_HUB_USERNAME')
-        DOCKER_HUB_PASSWORD = credentials('DOCKER_HUB_PASSWORD')
+        SSH_KEY_ID = 'docker-host-key'                // SSH private key for Docker host
+        DOCKER_IMAGE = 'dobretech/myapp'              // Your Docker Hub image
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds') // Jenkins credential ID: dockerhub-creds
     }
 
     stages {
@@ -54,7 +53,7 @@ pipeline {
                 sshagent (credentials: [env.SSH_KEY_ID]) {
                     sh """
                         ssh ubuntu@${DOCKER_HOST} '
-                            echo "${DOCKER_HUB_PASSWORD}" | docker login -u "${DOCKER_HUB_USERNAME}" --password-stdin &&
+                            echo "${DOCKER_CREDENTIALS_PSW}" | docker login -u "${DOCKER_CREDENTIALS_USR}" --password-stdin &&
                             docker push ${DOCKER_IMAGE}
                         '
                     """
@@ -78,10 +77,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment successful. App should be available at http://16.171.239.65:8080/myapp/'
+            echo '✅ Deployment successful. App should be available at: http://16.171.239.65:8080/myapp/'
         }
         failure {
-            echo 'Pipeline failed. Check logs for details.'
+            echo '❌ Pipeline failed. Check logs for details.'
         }
     }
 }
