@@ -5,8 +5,6 @@ pipeline {
         DOCKER_HOST = '16.171.239.65'
         SSH_USER = 'ubuntu'
         IMAGE_NAME = 'myapp:latest'
-        DOCKER_HUB_USER = 'your-dockerhub-username'  // Replace with your Docker Hub username
-        DOCKER_HUB_PASS = 'your-dockerhub-password'  // Replace with your Docker Hub password or use a secret
     }
 
     stages {
@@ -19,7 +17,6 @@ pipeline {
         stage('Build WAR') {
             steps {
                 script {
-                    // Run Maven to build the WAR file
                     sh 'mvn clean package -DskipTests'
                 }
             }
@@ -28,7 +25,6 @@ pipeline {
         stage('Prepare SSH Known Hosts') {
             steps {
                 script {
-                    // Add Docker host to SSH known hosts
                     sh 'mkdir -p ~/.ssh && ssh-keyscan -H $DOCKER_HOST >> ~/.ssh/known_hosts'
                 }
             }
@@ -38,7 +34,6 @@ pipeline {
             steps {
                 sshagent(['docker-ssh-key']) {
                     script {
-                        // Copy WAR file and Dockerfile to the Docker host
                         sh "scp target/myapp.war Dockerfile $SSH_USER@$DOCKER_HOST:/home/ubuntu/"
                     }
                 }
@@ -49,14 +44,6 @@ pipeline {
             steps {
                 sshagent(['docker-ssh-key']) {
                     script {
-                        // Diagnostic: Check Docker version and status
-                        sh """
-                            ssh $SSH_USER@$DOCKER_HOST '
-                            docker --version
-                            docker info
-                        '
-                        """
-                        // Build Docker image on the remote host
                         sh """
                             ssh $SSH_USER@$DOCKER_HOST '
                             cd /home/ubuntu &&
@@ -69,13 +56,17 @@ pipeline {
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                script {
-                    // Log in to Docker Hub
-                    sh """
-                        ssh $SSH_USER@$DOCKER_HOST '
-                        echo "$DOCKER_HUB_PASS" | docker login -u $DOCKER_HUB_USER --password-stdin
-                        docker push $DOCKER_HUB_USER/$IMAGE_NAME'
-                    """
+                sshagent(['docker-ssh-key']) {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
+                        script {
+                            sh """
+                                ssh $SSH_USER@$DOCKER_HOST '
+                                echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin &&
+                                docker tag $IMAGE_NAME $DOCKER_HUB_USER/$IMAGE_NAME &&
+                                docker push $DOCKER_HUB_USER/$IMAGE_NAME'
+                            """
+                        }
+                    }
                 }
             }
         }
@@ -84,9 +75,9 @@ pipeline {
             steps {
                 sshagent(['docker-ssh-key']) {
                     script {
-                        // Run the Docker container on the Docker host
                         sh """
                             ssh $SSH_USER@$DOCKER_HOST '
+                            docker rm -f myapp || true &&
                             docker run -d -p 8080:8080 --name myapp $IMAGE_NAME'
                         """
                     }
@@ -100,7 +91,7 @@ pipeline {
             echo "Pipeline finished"
         }
         success {
-            echo "Deployment succeeded!"
+            echo "✅ Deployment succeeded!"
         }
         failure {
             echo "❌ Deployment failed. Check the logs."
