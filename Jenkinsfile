@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS = credentials('docker-credentials')
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
         SSH_KEY = credentials('docker-ssh-key')
         DOCKER_HOST = 'ubuntu@16.171.239.65'
         DOCKER_PORT = '22'
