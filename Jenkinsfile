@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HOST = '16.171.239.65'
+        DOCKER_HOST = '13.49.80.179'
         SSH_USER = 'ubuntu'
         IMAGE_NAME = 'myapp:latest'
     }
