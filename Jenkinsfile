@@ -2,56 +2,75 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "dobretech/myapp"
-        CONTAINER_NAME = "myapp-container"
+        DOCKER_HOST = '16.171.239.65'
+        SSH_KEY_ID = 'docker-host-key'               // SSH private key for Docker host
+        DOCKER_IMAGE = 'dobretech/myapp'             // Your Docker Hub image
+        DOCKER_HUB_USERNAME = credentials('DOCKER_HUB_USERNAME')
+        DOCKER_HUB_PASSWORD = credentials('DOCKER_HUB_PASSWORD')
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Clone Code') {
             steps {
                 git 'https://github.com/DobreTech-Repo/Lab1.git'
             }
         }
 
-        stage('Build with Maven') {
+        stage('Build WAR') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Transfer to Docker Host') {
+            steps {
+                sshagent (credentials: [env.SSH_KEY_ID]) {
+                    sh """
+                        scp Dockerfile target/myapp.war ubuntu@${DOCKER_HOST}:/home/ubuntu/
+                        ssh ubuntu@${DOCKER_HOST} '
+                            mkdir -p ~/tomcat-app &&
+                            mv Dockerfile myapp.war ~/tomcat-app/
+                        '
+                    """
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:latest .'
+                sshagent (credentials: [env.SSH_KEY_ID]) {
+                    sh """
+                        ssh ubuntu@${DOCKER_HOST} '
+                            cd ~/tomcat-app &&
+                            docker build -t ${DOCKER_IMAGE} .
+                        '
+                    """
+                }
             }
         }
 
-        stage('Stop Previous Container') {
+        stage('Push to Docker Hub') {
             steps {
-                sh '''
-                if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
-                    docker stop $CONTAINER_NAME || true
-                    docker rm $CONTAINER_NAME || true
-                fi
-                '''
+                sshagent (credentials: [env.SSH_KEY_ID]) {
+                    sh """
+                        ssh ubuntu@${DOCKER_HOST} '
+                            echo "${DOCKER_HUB_PASSWORD}" | docker login -u "${DOCKER_HUB_USERNAME}" --password-stdin &&
+                            docker push ${DOCKER_IMAGE}
+                        '
+                    """
+                }
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Deploy to Docker') {
             steps {
-                sh 'docker run -d --name $CONTAINER_NAME -p 8888:8080 $IMAGE_NAME:latest'
-            }
-        }
-
-        stage('Push to Docker Hub (Optional)') {
-            when {
-                expression { return env.DOCKER_USER != null && env.DOCKER_PASS != null }
-            }
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push $IMAGE_NAME:latest
-                    '''
+                sshagent (credentials: [env.SSH_KEY_ID]) {
+                    sh """
+                        ssh ubuntu@${DOCKER_HOST} '
+                            docker rm -f tomcat-container || true &&
+                            docker run -d --name tomcat-container -p 8080:8080 ${DOCKER_IMAGE}
+                        '
+                    """
                 }
             }
         }
@@ -59,10 +78,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment completed successfully!"
+            echo 'Deployment successful. App should be available at http://16.171.239.65:8080/myapp/'
         }
         failure {
-            echo "❌ Build failed."
+            echo 'Pipeline failed. Check logs for details.'
         }
     }
 }
