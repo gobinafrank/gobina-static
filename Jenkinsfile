@@ -5,6 +5,8 @@ pipeline {
         DOCKER_HOST = '16.171.239.65'
         SSH_USER = 'ubuntu'
         IMAGE_NAME = 'myapp:latest'
+        DOCKER_HUB_USER = 'your-dockerhub-username'  // Replace with your Docker Hub username
+        DOCKER_HUB_PASS = 'your-dockerhub-password'  // Replace with your Docker Hub password or use a secret
     }
 
     stages {
@@ -61,6 +63,19 @@ pipeline {
                             docker build --no-cache -t $IMAGE_NAME .'
                         """
                     }
+                }
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    // Log in to Docker Hub
+                    sh """
+                        ssh $SSH_USER@$DOCKER_HOST '
+                        echo "$DOCKER_HUB_PASS" | docker login -u $DOCKER_HUB_USER --password-stdin
+                        docker push $DOCKER_HUB_USER/$IMAGE_NAME'
+                    """
                 }
             }
         }
