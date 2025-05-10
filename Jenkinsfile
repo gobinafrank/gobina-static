@@ -48,17 +48,18 @@ pipeline {
                 sshagent(['docker-ssh-key']) {
                     script {
                         // Diagnostic: Check Docker version and status
-                        sh '''
+                        sh """
                             ssh $SSH_USER@$DOCKER_HOST '
                             docker --version
                             docker info
                         '
+                        """
                         // Build Docker image on the remote host
-                        sh '''
+                        sh """
                             ssh $SSH_USER@$DOCKER_HOST '
                             cd /home/ubuntu &&
                             docker build --no-cache -t $IMAGE_NAME .'
-                        '''
+                        """
                     }
                 }
             }
@@ -69,10 +70,10 @@ pipeline {
                 sshagent(['docker-ssh-key']) {
                     script {
                         // Run the Docker container on the Docker host
-                        sh '''
+                        sh """
                             ssh $SSH_USER@$DOCKER_HOST '
                             docker run -d -p 8080:8080 --name myapp $IMAGE_NAME'
-                        '''
+                        """
                     }
                 }
             }
