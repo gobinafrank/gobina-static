@@ -33,7 +33,7 @@ pipeline {
 
         stage('Copy WAR and Dockerfile to Docker Host') {
             steps {
-                sshagent(['ubuntu']) {
+                sshagent(['docker-ssh-key']) {
                     sh '''
                         scp target/${WAR_NAME} Dockerfile $SSH_USER@$DOCKER_HOST:/home/ubuntu/
                     '''
@@ -43,12 +43,11 @@ pipeline {
 
         stage('Build Docker Image on Host') {
             steps {
-                sshagent(['ubuntu']) {
+                sshagent(['docker-ssh-key']) {
                     sh '''
                         ssh $SSH_USER@$DOCKER_HOST '
                         cd /home/ubuntu &&
-                        docker build -t $IMAGE_NAME .
-                        '
+                        docker build -t $IMAGE_NAME .'
                     '''
                 }
             }
@@ -56,7 +55,7 @@ pipeline {
 
         stage('Deploy Container') {
             steps {
-                sshagent(['ubuntu']) {
+                sshagent(['docker-ssh-key']) {
                     sh '''
                         ssh $SSH_USER@$DOCKER_HOST '
                         docker rm -f $CONTAINER_NAME || true &&
