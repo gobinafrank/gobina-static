@@ -4,13 +4,11 @@ pipeline {
     environment {
         DOCKER_HOST = '16.171.239.65'
         SSH_USER = 'ubuntu'
-        IMAGE_NAME = 'jenkins-image'
-        CONTAINER_NAME = 'myapp'
-        WAR_NAME = 'myapp.war'
+        IMAGE_NAME = 'myapp:latest'
     }
 
     stages {
-        stage('Checkout Source') {
+        stage('Checkout SCM') {
             steps {
                 checkout scm
             }
@@ -18,25 +16,29 @@ pipeline {
 
         stage('Build WAR') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                script {
+                    // Run Maven to build the WAR file
+                    sh 'mvn clean package -DskipTests'
+                }
             }
         }
 
         stage('Prepare SSH Known Hosts') {
             steps {
-                sh '''
-                    mkdir -p ~/.ssh
-                    ssh-keyscan -H $DOCKER_HOST >> ~/.ssh/known_hosts
-                '''
+                script {
+                    // Add Docker host to SSH known hosts
+                    sh 'mkdir -p ~/.ssh && ssh-keyscan -H $DOCKER_HOST >> ~/.ssh/known_hosts'
+                }
             }
         }
 
         stage('Copy WAR and Dockerfile to Docker Host') {
             steps {
                 sshagent(['docker-ssh-key']) {
-                    sh '''
-                        scp target/$WAR_NAME Dockerfile $SSH_USER@$DOCKER_HOST:/home/ubuntu/
-                    '''
+                    script {
+                        // Copy WAR file and Dockerfile to the Docker host
+                        sh "scp target/myapp.war Dockerfile $SSH_USER@$DOCKER_HOST:/home/ubuntu/"
+                    }
                 }
             }
         }
@@ -44,11 +46,14 @@ pipeline {
         stage('Build Docker Image on Host') {
             steps {
                 sshagent(['docker-ssh-key']) {
-                    sh '''
-                        ssh $SSH_USER@$DOCKER_HOST '
-                        cd /home/ubuntu &&
-                        docker build -t $IMAGE_NAME /home/ubuntu'
-                    '''
+                    script {
+                        // Build Docker image on the Docker host
+                        sh '''
+                            ssh $SSH_USER@$DOCKER_HOST '
+                            cd /home/ubuntu &&
+                            docker build -t $IMAGE_NAME .'
+                        '''
+                    }
                 }
             }
         }
@@ -56,20 +61,24 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 sshagent(['docker-ssh-key']) {
-                    sh '''
-                        ssh $SSH_USER@$DOCKER_HOST '
-                        docker rm -f $CONTAINER_NAME || true &&
-                        docker run -d --name $CONTAINER_NAME -p 8080:8080 $IMAGE_NAME
-                        '
-                    '''
+                    script {
+                        // Run the Docker container on the Docker host
+                        sh '''
+                            ssh $SSH_USER@$DOCKER_HOST '
+                            docker run -d -p 8080:8080 --name myapp $IMAGE_NAME'
+                        '''
+                    }
                 }
             }
         }
     }
 
     post {
+        always {
+            echo "Pipeline finished"
+        }
         success {
-            echo "✅ Deployment successful!"
+            echo "Deployment succeeded!"
         }
         failure {
             echo "❌ Deployment failed. Check the logs."
